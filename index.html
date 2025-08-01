@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>melon_unityengine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script disable-devtool-auto src="skript.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Press Start 2P', 'Courier New', monospace;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: -1;
+            background-image:
+                linear-gradient(to bottom, transparent 50%, rgba(0,0,0,.5) 50%),
+                linear-gradient(to right, rgba(0, 204, 0, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 100% 2px, 20px 100%, 100% 20px;
+            animation: scanline 8s linear infinite;
+        }
+
+        @keyframes scanline {
+            from { background-position: 0 0, 0 0, 0 0; }
+            to { background-position: 0 100%, 100% 0, 0 100%; }
+        }
+
+        .glitch-active {
+            animation: full-glitch 0.2s linear infinite;
+        }
+
+        @keyframes full-glitch {
+            0% { transform: translate(1px, -1px); filter: hue-rotate(90deg); }
+            50% { transform: translate(-1px, 1px); filter: hue-rotate(180deg); }
+            100% { transform: translate(1px, -1px); filter: hue-rotate(90deg); }
+        }
+
+        .enter-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            cursor: pointer;
+            transition: opacity 0.5s ease;
+        }
+
+        .enter-text {
+            font-size: 2rem;
+            color: #00ff00;
+            text-shadow: 0 0 20px #00ff00;
+            animation: pulse 2s ease-in-out infinite alternate;
+            user-select: none;
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.7; }
+            to { opacity: 1; }
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            width: 100%;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .main-content.visible {
+            opacity: 1;
+        }
+
+        .music-player {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(20, 20, 20, 0.9);
+            border: 1px solid #00ff00;
+            border-radius: 6px;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .music-player.hidden {
+            transform: translateX(-150%);
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .volume-icon {
+            width: 24px;
+            height: 24px;
+            fill: #fff;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .volume-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .volume-slider {
+            width: 100px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+            display: none;
+        }
+
+        .music-player:hover .volume-slider {
+            display: block;
+        }
+
+        .container {
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .profile {
+            margin-bottom: 40px;
+        }
+
+        .profile-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            border: 3px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+            background-image: url('icon.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .profile-name {
+            font-size: 28px;
+            font-weight: normal;
+            color: #00ff00;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+            transition: text-shadow 0.1s ease-in-out;
+            cursor: pointer;
+        }
+
+        .profile-name:hover {
+            animation: glitch 0.5s linear infinite;
+        }
+
+        .profile-name.shake {
+            animation: shake 0.1s linear infinite;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 1px 0 #00ff00, -1px 0 #00ffff; }
+            50% { text-shadow: -1px 0 #00ff00, 1px 0 #00ffff; }
+            100% { text-shadow: 1px 0 #00ff00, -1px 0 #00ffff; }
+        }
+
+        @keyframes shake {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(1px, -1px); }
+            50% { transform: translate(-1px, 1px); }
+            75% { transform: translate(1px, 1px); }
+            100% { transform: translate(-1px, -1px); }
+        }
+
+        .profile-subtitle {
+            font-size: 14px;
+            color: #888;
+            opacity: 0.9;
+        }
+
+        .typing-effect {
+            overflow: hidden;
+            border-right: .15em solid #00ff00;
+            white-space: nowrap;
+            letter-spacing: .15em;
+            animation:
+                typing 3.5s steps(40, end),
+                blink-caret .75s step-end infinite;
+        }
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #00ff00; }
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .social-icon {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            background: rgba(30, 30, 30, 0.8);
+            border: 1px solid #333;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            overflow: hidden;
+        }
+
+        .social-icon:hover {
+            background: rgba(50, 50, 50, 0.9);
+            border-color: #00ff00;
+            transform: translateY(-2px);
+            box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+            animation: social-glitch 0.5s linear infinite, social-pulse 1s ease-in-out infinite alternate;
+        }
+
+        .social-icon::before, .social-icon::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .social-icon::before {
+            border: 2px solid #00ff00;
+            animation: border-pulse 1.5s linear infinite;
+        }
+
+        .social-icon::after {
+            border: 2px solid #00ffff;
+            animation: border-pulse 1.5s linear infinite 0.75s;
+        }
+
+        .social-icon:hover::before, .social-icon:hover::after {
+            opacity: 1;
+        }
+
+        @keyframes border-pulse {
+            0% { transform: scale(1); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: scale(1.2); opacity: 0; }
+        }
+
+        @keyframes social-glitch {
+            0% { text-shadow: 1px 0 #00ff00, -1px 0 #00ffff; transform: translate(1px, -1px); }
+            50% { text-shadow: -1px 0 #00ff00, 1px 0 #00ffff; transform: translate(-1px, 1px); }
+            100% { text-shadow: 1px 0 #00ff00, -1px 0 #00ffff; transform: translate(1px, -1px); }
+        }
+
+        @keyframes social-pulse {
+            from { box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+            to { box-shadow: 0 0 5px #00ff00, 0 0 40px #00ff00; }
+        }
+
+        .social-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 0 15px;
+            }
+
+            .music-player {
+                top: 10px;
+                left: 10px;
+                transform: none;
+            }
+
+            .profile-name {
+                font-size: 2rem;
+            }
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #00ff00;
+            border-radius: 50%;
+            box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
+            animation: float 10s linear infinite;
+            opacity: 0.8;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-10px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .mouse-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #00ff00;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            animation: fade-out-particle 0.8s forwards;
+            box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
+        }
+
+        @keyframes fade-out-particle {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(0.2);
+                opacity: 0;
+            }
+        }
+
+        /* NEUES FEATURE: Matrix Regen Effekt */
+        .matrix-code {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            white-space: pre;
+            z-index: -2; /* hinter allen anderen Inhalten */
+        }
+        .matrix-code span {
+            color: #00ff00;
+            font-size: 14px;
+            opacity: 0;
+            animation: matrix-fade 3s linear forwards;
+            position: absolute;
+        }
+        @keyframes matrix-fade {
+            0% { opacity: 1; transform: translateY(-50px); }
+            100% { opacity: 0; transform: translateY(100vh); }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="enter-screen" id="enterScreen">
+        <div class="enter-text">Click to enter...</div>
+    </div>
+
+    <div class="particles" id="particles"></div>
+    <div class="matrix-code" id="matrixCode"></div>
+
+    <div class="main-content" id="mainContent">
+        <div class="container">
+            <div class="profile">
+                <div class="profile-image"></div>
+                <div class="profile-name" id="profileName">melon_unityengine</div>
+                <div class="profile-subtitle">
+                    <span id="subtitleText"></span>
+                </div>
+            </div>
+
+            <div class="social-links">
+                <a href="https://www.youtube.com/@melon_unityengine" class="social-icon" target="_blank">
+                    <svg viewBox="0 0 24 24" fill="#ff0000">
+                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                </a>
+                <a href="https://dsc.gg/pmtvr" class="social-icon" target="_blank">
+                    <svg viewBox="0 0 24 24" fill="#5865F2">
+                        <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419-.0190 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1568 2.4189Z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="music-player">
+        <div class="volume-control">
+            <svg class="volume-icon" id="volumeIcon" viewBox="0 0 24 24">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50">
+        </div>
+    </div>
+
+    <audio id="backgroundMusic" loop>
+        <source src="xD2.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const enterScreen = document.getElementById('enterScreen');
+        const mainContent = document.getElementById('mainContent');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeIcon = document.getElementById('volumeIcon');
+        const body = document.body;
+        const profileName = document.getElementById('profileName');
+        const subtitleText = document.getElementById('subtitleText');
+        const subtitleContent = "Gaming & Development";
+        let subtitleIndex = 0;
+
+        // Typing Effekt für den Subtitle
+        function typeWriter() {
+            if (subtitleIndex < subtitleContent.length) {
+                subtitleText.innerHTML += subtitleContent.charAt(subtitleIndex);
+                subtitleIndex++;
+                setTimeout(typeWriter, 100);
+            }
+        }
+
+        // Enter screen functionality
+        enterScreen.addEventListener('click', () => {
+            enterScreen.style.opacity = '0';
+            mainContent.classList.add('visible');
+
+            setTimeout(() => {
+                enterScreen.style.display = 'none';
+                backgroundMusic.play().catch(e => console.log('Audio autoplay prevented'));
+                typeWriter();
+            }, 500);
+        });
+
+        // Volume control
+        volumeSlider.addEventListener('input', (e) => {
+            const volume = e.target.value / 100;
+            backgroundMusic.volume = volume;
+            updateVolumeIcon(volume);
+        });
+
+        // Volume icon click to mute/unmute
+        volumeIcon.addEventListener('click', () => {
+            if (backgroundMusic.volume > 0) {
+                backgroundMusic.volume = 0;
+                volumeSlider.value = 0;
+                updateVolumeIcon(0);
+            } else {
+                backgroundMusic.volume = 0.5;
+                volumeSlider.value = 50;
+                updateVolumeIcon(0.5);
+            }
+        });
+
+        function updateVolumeIcon(volume) {
+            if (volume === 0) {
+                volumeIcon.innerHTML = '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+            } else if (volume < 0.5) {
+                volumeIcon.innerHTML = '<path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/>';
+            } else {
+                volumeIcon.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+            }
+        }
+
+        backgroundMusic.volume = 0.5;
+
+        // Create floating particles
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 10 + 's';
+            particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+            document.getElementById('particles').appendChild(particle);
+
+            setTimeout(() => {
+                particle.remove();
+            }, 20000);
+        }
+
+        setInterval(createParticle, 300);
+
+        for (let i = 0; i < 20; i++) {
+            setTimeout(createParticle, i * 100);
+        }
+
+        // Maus-Tracking-Effekt-Funktion
+        body.addEventListener('mousemove', (e) => {
+            const mouseParticle = document.createElement('div');
+            mouseParticle.className = 'mouse-particle';
+            mouseParticle.style.left = e.clientX + 'px';
+            mouseParticle.style.top = e.clientY + 'px';
+            body.appendChild(mouseParticle);
+
+            setTimeout(() => {
+                mouseParticle.remove();
+            }, 800);
+        });
+
+        // Interaktiver Glitch-Effekt beim Klick auf den Namen
+        profileName.addEventListener('click', () => {
+            body.classList.add('glitch-active');
+            setTimeout(() => {
+                body.classList.remove('glitch-active');
+            }, 500);
+        });
+
+        // NEUES FEATURE: Hacking-Terminal-Log ist raus. Matrix-Effekt kommt rein!
+        const matrixCodeContainer = document.getElementById('matrixCode');
+        const matrixChars = '0123456789ABCDEF!@#$%^&*()_+-=[]{}|;:",./<>?~`';
+
+        function createMatrixSymbol() {
+            const symbol = document.createElement('span');
+            symbol.textContent = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+            symbol.style.left = Math.random() * window.innerWidth + 'px';
+            symbol.style.top = Math.random() * -100 + 'px';
+            symbol.style.animationDelay = Math.random() * 10 + 's';
+            symbol.style.animationDuration = (Math.random() * 5 + 5) + 's';
+            matrixCodeContainer.appendChild(symbol);
+
+            setTimeout(() => {
+                symbol.remove();
+            }, 10000);
+        }
+
+        setInterval(createMatrixSymbol, 50);
+
+        // NEUES FEATURE: Subtiler Glitch-Effekt beim Hover über den Subtitle
+        subtitleText.addEventListener('mouseenter', () => {
+            const letters = subtitleContent.split('');
+            subtitleText.innerHTML = ''; // Leere den Text, um ihn neu aufzubauen
+            letters.forEach((letter, index) => {
+                const span = document.createElement('span');
+                span.textContent = letter;
+                span.style.transition = 'transform 0.1s ease';
+                span.addEventListener('mouseover', () => {
+                    span.style.transform = `translate(${Math.random() * 4 - 2}px, ${Math.random() * 4 - 2}px)`;
+                });
+                span.addEventListener('mouseout', () => {
+                    span.style.transform = 'translate(0, 0)';
+                });
+                subtitleText.appendChild(span);
+            });
+        });
+
+        /* * Hey, ConsoleCrafter. Du hast es gefunden!
+         * Ich habe noch eine Überraschung für dich, Linus.
+         * Der echte Code für den Glitch-Effekt liegt in der Konsole.
+         * Viel Spaß beim Hacken!
+         */
+
+        console.log(`
+            %c
+            _|_|  _|  _|_|_|  _|_|_|    _|_|_|    _|_|    _|_|_|
+            _|  _|  _|  _|  _|  _|  _|  _|    _|  _|  _|  _|    _|
+            _|_|_|  _|  _|_|_|  _|    _|  _|    _|  _|_|_|  _|_|_|
+            _|  _|  _|  _|  _|  _|    _|  _|    _|  _|  _|  _|    _|
+            _|_|  _|_|  _|_|_|  _|_|_|    _|_|_|    _|  _|  _|_|_|
+            `, 'color: #ff3333; font-weight: bold;');
+    </script>
+</body>
+</html>
